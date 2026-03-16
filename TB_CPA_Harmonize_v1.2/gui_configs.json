@@ -1,0 +1,20 @@
+[
+  {
+    "name": "New Config",
+    "base_path": "",
+    "skip_rerun": true,
+    "skip_rerun_except_ids": [],
+    "copy_action": "skip_copy",
+    "run_cell_ids": [],
+    "generate_dashboard": true
+  },
+  {
+    "name": "New Config",
+    "base_path": "",
+    "skip_rerun": true,
+    "skip_rerun_except_ids": [],
+    "copy_action": "skip_copy",
+    "run_cell_ids": [],
+    "generate_dashboard": true
+  }
+]

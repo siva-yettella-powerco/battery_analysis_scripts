@@ -5,6 +5,31 @@ Transforms supplier-specific raw files into a unified 16-column CSV schema.
 
 ---
 
+## GUI (Recommended for interactive use)
+
+A point-and-click interface for running multiple configs without editing any Python files.
+
+```bash
+python battery_analysis_scripts/TB_CPA_Harmonize_v1.2/harmonize_gui.py
+```
+
+**Features:**
+
+| Feature | Detail |
+|---------|--------|
+| Config list | Add, remove, or duplicate configs in the left panel |
+| Editor | Set Name, Base Path, Skip Rerun, Force-rerun IDs, Copy Action, Cell ID filter, Dashboard toggle |
+| Run This | Runs the selected config in a background subprocess with live console output |
+| Run All | Runs all configs sequentially (skips any with no Base Path set) |
+| Stop | Terminates the running process cleanly; cancels the remaining queue |
+| Console | Live-streamed output with timestamps; Clear and Copy All buttons |
+| Persistence | Configs auto-saved to `gui_configs.json` on close and reloaded on next launch |
+| Save / Load | Export or import configs as a JSON file via toolbar buttons |
+
+**Requirements:** `PySide6` (install with `pip install PySide6`)
+
+---
+
 ## Quick Start
 
 **Single project:**
@@ -27,9 +52,11 @@ python battery_analysis_scripts/TB_CPA_Harmonize_v1.2/run_all_config.py
 
 | File | Purpose |
 |------|---------|
-| `run_config.py` | Single-project entry point — edit `BASE_PATH` and run parameters here |
-| `run_all_config.py` | Multi-project entry point — list of `PROJECTS` dicts, one per data root |
+| `harmonize_gui.py` | **GUI entry point** — interactive multi-config runner (PySide6) |
+| `run_config.py` | Single-project script entry point — edit `BASE_PATH` and run parameters here |
+| `run_all_config.py` | Multi-project script entry point — list of `PROJECTS` dicts, one per data root |
 | `run_all.bat` | Windows batch launcher for Task Scheduler (see Scheduling section) |
+| `_gui_runner.py` | Internal subprocess shim used by the GUI — do not run directly |
 
 ---
 
@@ -170,6 +197,7 @@ Key packages: `pandas`, `openpyxl`, `pyarrow`, `python-magic`, `pyyaml`, `tqdm`
 
 ### v1.2 *(current)*
 **New features:**
+- `harmonize_gui.py` + `_gui_runner.py` — PySide6 GUI for interactive multi-config runs with live console output, Stop button, and JSON persistence (no changes to core pipeline)
 - `run_config.py` — single-file user entry point; `BASE_PATH` and all run parameters in one place, no need to edit `paths.py` or `harmonize_run.py`
 - `run_all_config.py` — multi-project entry point; add multiple `BASE_PATH` entries as a list of project dicts
 - `run_all.bat` — Windows batch launcher with Task Scheduler setup instructions inline; appends output to `run_all.log`
