@@ -8,6 +8,7 @@ All underlying functions in harmonize/ are unchanged.
 
 import logging
 import socket
+import warnings
 from pathlib import Path
 from datetime import datetime
 
@@ -40,6 +41,8 @@ def run_harmonize(
     run_cell_ids         : list of cell folder names to process; [] = all cells
     generate_dashboard   : write harmonize_dashboard.html to logs folder
     """
+    warnings.filterwarnings("ignore")
+
     if skip_rerun_except_ids is None:
         skip_rerun_except_ids = []
     if run_cell_ids is None:
@@ -120,6 +123,7 @@ def run_harmonize(
             continue
 
         file_id = str(file_path)
+        print(f"Processing: {file_path.name}", flush=True)
 
         # Find matching configuration
         config_match_name, hm_status_dict = find_matching_config(

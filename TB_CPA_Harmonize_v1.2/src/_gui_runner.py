@@ -7,7 +7,10 @@ DO NOT run this file directly.
 
 import sys
 import json
+import warnings
 from pathlib import Path
+
+warnings.filterwarnings("ignore")
 
 # Package root is one level up from src/
 _ROOT = Path(__file__).parent.parent
