@@ -98,18 +98,21 @@ class DashboardGenerator:
                     except Exception:
                         last_edited = "—"
 
-                # Track latest mtime from the extracted source file too
                 try:
                     src_mtime = src.stat().st_mtime
-                    if src_mtime > latest_mtime:
-                        latest_mtime = src_mtime
+                    src_last_modified = datetime.fromtimestamp(src_mtime).strftime("%Y-%m-%d %H:%M:%S")
                 except Exception:
-                    pass
+                    src_mtime = 0.0
+                    src_last_modified = "—"
+
+                if src_mtime > latest_mtime:
+                    latest_mtime = src_mtime
 
                 file_rows.append({
-                    "file_name":    src.name,
-                    "is_harmonized": is_harm,
-                    "last_edited":  last_edited,
+                    "file_name":          src.name,
+                    "is_harmonized":      is_harm,
+                    "last_edited":        last_edited,
+                    "src_last_modified":  src_last_modified,
                 })
 
             last_file_modified = (
@@ -269,7 +272,6 @@ def _build_html(cell_summary: list, total_stats: dict, run_ts: str, project_name
         <th onclick="sortTable(2)">Harmonized ⇅</th>
         <th onclick="sortTable(3)">Not Harmonized ⇅</th>
         <th onclick="sortTable(4)">Progress ⇅</th>
-        <th onclick="sortTable(5)">Last Modified (Extract) ⇅</th>
       </tr>
     </thead>
     <tbody id="cellTbody"></tbody>
@@ -313,6 +315,7 @@ function renderFileDetail(files) {{
       <th>File Name</th>
       <th>Harmonized?</th>
       <th>Last Edited in Harmonize Folder</th>
+      <th>Last Edited in Extract Folder</th>
     </tr></thead><tbody>`;
   files.forEach(f => {{
     const badge = f.is_harmonized
@@ -322,6 +325,7 @@ function renderFileDetail(files) {{
       <td>${{f.file_name}}</td>
       <td>${{badge}}</td>
       <td>${{f.last_edited}}</td>
+      <td>${{f.src_last_modified || '—'}}</td>
     </tr>`;
   }});
   html += '</tbody></table></div>';
@@ -342,7 +346,6 @@ function renderRows(cells) {{
       <td>${{cell.harmonized_count}}</td>
       <td>${{cell.not_harmonized_count}}</td>
       <td data-sort="${{prog.pct}}">${{prog.html}}</td>
-      <td>${{cell.last_file_modified || '—'}}</td>
     `;
     tbody.appendChild(tr);
 
@@ -350,7 +353,7 @@ function renderRows(cells) {{
     detailTr.className = 'detail-row';
     detailTr.style.display = 'none';
     const detailTd = document.createElement('td');
-    detailTd.colSpan = 6;
+    detailTd.colSpan = 5;
     detailTd.innerHTML = renderFileDetail(cell.files);
     detailTr.appendChild(detailTd);
     tbody.appendChild(detailTr);
@@ -387,7 +390,6 @@ function sortTable(colIdx) {{
       va = a.harmonized_count / tot;
       vb = b.harmonized_count / totb;
     }}
-    else if (colIdx === 5) {{ va = a.last_file_modified || ''; vb = b.last_file_modified || ''; }}
     else {{ va = ''; vb = ''; }}
     const na = parseFloat(va), nb = parseFloat(vb);
     const cmp = isNaN(na) || isNaN(nb) ? String(va).localeCompare(String(vb)) : na - nb;

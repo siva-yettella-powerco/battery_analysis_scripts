@@ -114,7 +114,7 @@ def run_harmonize(
 
         # Skip logic
         if csv_exists and skip_rerun and cell_id not in skip_rerun_except_ids:
-            logging.info(f"Skipped (already harmonized): {file_path.name}")
+            # logging.info(f"Skipped (already harmonized): {file_path.name}")
             trace_log.record(
                 run_timestamp, cell_id, file_path,
                 status='Skipped',

@@ -393,7 +393,7 @@ class ConfigEditorWidget(QWidget):
         self.dashboard_cb = QCheckBox("Generate HTML dashboard after run")
         self.dashboard_cb.stateChanged.connect(self._on_change)
         dash_row.addWidget(self.dashboard_cb)
-        self.reload_dash_btn = QPushButton("⟳  Refresh Dashboard")
+        self.reload_dash_btn = QPushButton("⟳")
         self.reload_dash_btn.setObjectName("reload_dash_btn")
         self.reload_dash_btn.setToolTip("Regenerate dashboard now (without running the pipeline)")
         self.reload_dash_btn.clicked.connect(self._emit_reload_dashboard)
@@ -569,9 +569,11 @@ class MainWindow(QMainWindow):
 
         self._configs: list[dict] = []
         self._current_idx: int = -1
-        self._worker: RunWorker | None = None
+        self._workers: dict[int, RunWorker] = {}
+        self._worker_states: dict[int, tuple] = {}   # idx -> (status_text, color, is_running)
         self._dash_worker: DashboardWorker | None = None
         self._run_all_queue: list[int] = []
+        self._run_all_chain_idx: int | None = None
 
         # Central widget
         root = QWidget()
@@ -724,6 +726,10 @@ class MainWindow(QMainWindow):
             return
         self._current_idx = row
         self.editor.load_config(self._configs[row])
+        if row in self._worker_states:
+            text, color, running = self._worker_states[row]
+            self.editor.set_status(text, color)
+            self.editor.set_running(running)
 
     def _on_editor_change(self):
         if self._current_idx < 0:
@@ -751,7 +757,7 @@ class MainWindow(QMainWindow):
     # ── Run logic ─────────────────────────────────────────────────────────────
 
     def _run_config(self, cfg: dict):
-        if self._worker and self._worker.isRunning():
+        if self._current_idx in self._workers:
             return
         if not cfg.get("base_path"):
             QMessageBox.warning(self, "Missing Path", "Please set a Base Path before running.")
@@ -760,62 +766,74 @@ class MainWindow(QMainWindow):
 
     def _start_worker(self, cfg: dict, cfg_idx: int):
         self.console.append(f"━━━  Starting: {cfg['name']}  ━━━")
-        self.editor.set_status(*STATUS_RUNNING)
-        self.editor.set_running(True)
-        self.run_all_btn.setEnabled(False)
+        self._worker_states[cfg_idx] = (*STATUS_RUNNING, True)
+        if cfg_idx == self._current_idx:
+            self.editor.set_status(*STATUS_RUNNING)
+            self.editor.set_running(True)
 
-        self._worker = RunWorker(cfg)
-        self._worker.line_received.connect(self.console.append)
-        self._worker.finished.connect(lambda ok, msg: self._on_finished(ok, msg, cfg_idx))
-        self._worker.start()
+        worker = RunWorker(cfg)
+        cfg_name = cfg['name']
+        worker.line_received.connect(
+            lambda line, n=cfg_name: self.console.append(f"[{n}]  {line}") if len(self._workers) > 1 else self.console.append(line)
+        )
+        worker.finished.connect(lambda ok, msg: self._on_finished(ok, msg, cfg_idx))
+        worker.start()
+        self._workers[cfg_idx] = worker
 
     def _on_finished(self, ok: bool, msg: str, cfg_idx: int):
-        self.editor.set_running(False)
+        self._workers.pop(cfg_idx, None)
 
         if ok:
-            self.editor.set_status(*STATUS_DONE)
+            state = (*STATUS_DONE, False)
             self.console.append(f"✔ {msg}")
         elif "Stopped" in msg:
-            self.editor.set_status(*STATUS_STOPPED)
+            state = (*STATUS_STOPPED, False)
             self.console.append(f"■ {msg}")
         else:
-            self.editor.set_status(*STATUS_FAILED)
+            state = (*STATUS_FAILED, False)
             self.console.append(f"✗ {msg}")
 
-        self._worker = None
+        self._worker_states[cfg_idx] = state
+        if cfg_idx == self._current_idx:
+            text, color, running = state
+            self.editor.set_status(text, color)
+            self.editor.set_running(running)
 
-        # Continue run-all queue
-        if self._run_all_queue:
-            next_idx = self._run_all_queue.pop(0)
-            if 0 <= next_idx < len(self._configs):
-                self.list_widget.setCurrentRow(next_idx)
-                self._start_worker(self._configs[next_idx], next_idx)
+        if cfg_idx == self._run_all_chain_idx:
+            if self._run_all_queue:
+                next_idx = self._run_all_queue.pop(0)
+                if 0 <= next_idx < len(self._configs):
+                    self._run_all_chain_idx = next_idx
+                    self.list_widget.setCurrentRow(next_idx)
+                    self._start_worker(self._configs[next_idx], next_idx)
+                else:
+                    self._finish_run_all()
             else:
                 self._finish_run_all()
-        else:
-            self.run_all_btn.setEnabled(True)
 
     def _finish_run_all(self):
+        self._run_all_chain_idx = None
         self.run_all_btn.setEnabled(True)
         self.console.append("━━━  All configs finished.  ━━━")
 
     def _stop(self):
-        if self._worker:
-            self._run_all_queue.clear()   # cancel remaining queue
-            self._worker.stop()
+        idx = self._current_idx
+        if idx in self._workers:
+            self._run_all_queue.clear()
+            self._run_all_chain_idx = None
+            self._workers[idx].stop()
 
     def _run_all(self):
-        if not self._configs:
+        if not self._configs or self._run_all_chain_idx is not None:
             return
-        if self._worker and self._worker.isRunning():
-            return
-        # Build queue: skip any with no base_path
         queue = [i for i, c in enumerate(self._configs) if c.get("base_path")]
         if not queue:
             QMessageBox.warning(self, "No Paths", "Please set Base Paths for your configs first.")
             return
         first = queue.pop(0)
         self._run_all_queue = queue
+        self._run_all_chain_idx = first
+        self.run_all_btn.setEnabled(False)
         self.list_widget.setCurrentRow(first)
         self._start_worker(self._configs[first], first)
 

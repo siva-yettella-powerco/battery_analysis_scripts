@@ -31,8 +31,8 @@ class DashboardGenerator:
     """
 
     def __init__(self, status_dict: dict, logs_path: Path):
-        self._zip_rows = _build_zip_rows(status_dict)
         self._run_ts   = time.strftime("%Y-%m-%d %H:%M:%S")
+        self._zip_rows = _build_zip_rows(status_dict, self._run_ts)
         self._hostname = socket.gethostname()
 
         # Merge historical data for ZIPs not in current run
@@ -47,7 +47,7 @@ class DashboardGenerator:
 
 # ── Data extraction ──────────────────────────────────────────────────────────
 
-def _build_zip_rows(status_dict: dict) -> list[dict]:
+def _build_zip_rows(status_dict: dict, run_ts: str) -> list[dict]:
     """Convert the pipeline status_dict into a flat list of per-ZIP dicts."""
     rows = []
     for zip_path_str, entry in status_dict.items():
@@ -84,6 +84,7 @@ def _build_zip_rows(status_dict: dict) -> list[dict]:
         rows.append({
             "zip_name":        zip_name,
             "zip_path":        zip_path_str,
+            "run_ts":          run_ts,
             "to_copy":         to_copy,
             "copied":          copied,
             "corrupt":         corrupt,
@@ -223,6 +224,7 @@ def _merge_historical(live_rows: list[dict], logs_path: Path) -> list[dict]:
         live_rows.append({
             "zip_name":        str(row.get("ZIP_name", "?")),
             "zip_path":        zp,
+            "run_ts":          str(row.get("Run_timestamp", "—")),
             "to_copy":         _int(row.get("To_copy")),
             "copied":          _int(row.get("Copied")),
             "corrupt":         _int(row.get("Corrupt")),
@@ -422,14 +424,15 @@ def _build_html(zip_rows: list[dict], run_ts: str, hostname: str) -> str:
     <thead>
       <tr>
         <th onclick="sortTable(0)">ZIP Archive ⇅</th>
-        <th onclick="sortTable(1)">To Copy ⇅</th>
-        <th onclick="sortTable(2)">Copied ⇅</th>
-        <th onclick="sortTable(3)">Corrupt ⇅</th>
-        <th onclick="sortTable(4)">Ignored ⇅</th>
-        <th onclick="sortTable(5)">Unknown ⇅</th>
-        <th onclick="sortTable(6)">Cells ⇅</th>
-        <th onclick="sortTable(7)">Archived ⇅</th>
-        <th onclick="sortTable(8)">Status ⇅</th>
+        <th onclick="sortTable(1)">Run Date ⇅</th>
+        <th onclick="sortTable(2)">To Copy ⇅</th>
+        <th onclick="sortTable(3)">Copied ⇅</th>
+        <th onclick="sortTable(4)">Corrupt ⇅</th>
+        <th onclick="sortTable(5)">Ignored ⇅</th>
+        <th onclick="sortTable(6)">Unknown ⇅</th>
+        <th onclick="sortTable(7)">Cells ⇅</th>
+        <th onclick="sortTable(8)">Archived ⇅</th>
+        <th onclick="sortTable(9)">Status ⇅</th>
       </tr>
     </thead>
     <tbody id="zipTbody"></tbody>
@@ -471,37 +474,16 @@ function numCell(n, cls) {{
 }}
 
 function buildDetail(row) {{
-  const cd  = row.cell_details || {{}};
   const cbc = row.corrupt_by_cell || {{}};
 
-  // ── Per-cell summary table ────────────────────────────────────────────────
-  let cellTable = '<div class="detail-section"><h3>Cell ID Breakdown (' + row.cell_ids.length + ')</h3>';
+  // ── Cell ID chips ─────────────────────────────────────────────────────────
+  let cellTable = '<div class="detail-section"><h3>Cell IDs (' + row.cell_ids.length + ')</h3>';
   if (row.cell_ids.length === 0) {{
     cellTable += '<p style="color:#999;font-size:.82rem">No cell IDs found (no files copied)</p>';
   }} else {{
-    cellTable += `<table class="cell-table">
-      <thead><tr>
-        <th>Cell ID</th>
-        <th>Supplier</th>
-        <th>To Copy</th>
-        <th>Copied</th>
-        <th>Corrupt</th>
-      </tr></thead><tbody>`;
-    row.cell_ids.forEach(cid => {{
-      const s = cd[cid] || {{}};
-      const toCopy  = s.to_copy  ?? 0;
-      const copied  = s.copied   ?? 0;
-      const corrupt = s.corrupt  ?? 0;
-      const sup     = s.supplier || '—';
-      cellTable += `<tr>
-        <td><strong>${{cid}}</strong></td>
-        <td>${{sup}}</td>
-        <td>${{toCopy}}</td>
-        <td class="${{copied  > 0 ? 'num-green' : ''}}">${{copied}}</td>
-        <td class="${{corrupt > 0 ? 'num-red'   : ''}}">${{corrupt}}</td>
-      </tr>`;
-    }});
-    cellTable += '</tbody></table>';
+    cellTable += '<div class="chip-list">';
+    row.cell_ids.forEach(cid => {{ cellTable += `<span class="chip">${{cid}}</span>`; }});
+    cellTable += '</div>';
   }}
   cellTable += '</div>';
 
@@ -557,6 +539,7 @@ function renderRows(rows) {{
 
     tr.innerHTML =
       `<td class="expand-cell">${{row.zip_name}}</td>` +
+      `<td style="white-space:nowrap;font-size:.82rem;color:#555">${{row.run_ts || '—'}}</td>` +
       `<td>${{row.to_copy}}</td>` +
       (row.copied  > 0 ? `<td class="num-green">${{row.copied}}</td>`  : `<td>0</td>`) +
       (row.corrupt > 0 ? `<td class="num-red">${{row.corrupt}}</td>`   : `<td>0</td>`) +
@@ -572,7 +555,7 @@ function renderRows(rows) {{
     detailTr.className = 'detail-row';
     detailTr.style.display = 'none';
     const td = document.createElement('td');
-    td.colSpan = 9;
+    td.colSpan = 10;
     td.innerHTML = buildDetail(row);
     detailTr.appendChild(td);
     tbody.appendChild(detailTr);
@@ -603,7 +586,7 @@ function applyFilter() {{
 function sortTable(colIdx) {{
   const dir = (_sortDir[colIdx] = !_sortDir[colIdx]);
   _allRows.sort((a, b) => {{
-    const cols = ['zip_name','to_copy','copied','corrupt','ignored','unknown','cell_ids','archive_moved','overall'];
+    const cols = ['zip_name','run_ts','to_copy','copied','corrupt','ignored','unknown','cell_ids','archive_moved','overall'];
     let va = a[cols[colIdx]], vb = b[cols[colIdx]];
     if (cols[colIdx] === 'cell_ids') {{ va = va.length; vb = vb.length; }}
     if (typeof va === 'boolean') {{ va = va ? 1 : 0; vb = vb ? 1 : 0; }}
