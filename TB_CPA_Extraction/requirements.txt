@@ -1,10 +1,17 @@
-pandas >= 2.3.0
-openpyxl >= 3.1.5
-xlsxwriter >= 3.2.5
-pyarrow >= 20.0.0
-tabulate >= 0.9.0
-python-magic >= 0.4.27
-python-magic-bin >= 0.4.14
-patool >= 4.0.1
-tqdm >= 4.0.0
-pyyaml >= 6.0
+# TB_CPA_Extraction v1.2 dependencies
+# Install with: pip install -r requirements.txt
+
+# ── Core pipeline (same as TB_CPA_Extraction) ─────────────────────────────────
+patool           # archive detection & extraction
+pandas
+openpyxl         # Excel read/write (trace log)
+pyyaml           # format_config.yaml
+python-magic     # file type detection
+tqdm             # progress bars
+tabulate         # console table summary
+
+# ── GUI ───────────────────────────────────────────────────────────────────────
+PySide6          # extraction_gui.py
+
+# ── Optional (already used by pipeline) ───────────────────────────────────────
+# winsound — Windows built-in, no install needed

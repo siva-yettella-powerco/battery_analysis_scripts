@@ -3,8 +3,9 @@ from pathlib import Path
 import logging
 import os
 
-def long_path(anypath:Path, path_length_thresh=0)->Path:
-    # converts paths to \\?\ to support long paths
+
+def long_path(anypath: Path, path_length_thresh=0) -> Path:
+    """Converts paths to \\?\ to support Windows long paths (>260 chars)."""
     normalized = os.fspath(anypath.resolve())
     if len(normalized) > path_length_thresh:
         if not normalized.startswith('\\\\?\\'):
@@ -12,51 +13,52 @@ def long_path(anypath:Path, path_length_thresh=0)->Path:
         return Path(normalized)
     return anypath
 
+
 class PATHS_OBJ:
-    # ----------------- INPUT PATH HERE -----------------
-    base_path = Path(r"C:\Users\WYBT00P\OneDrive - Volkswagen AG\C48 Test data #2 - 02_CPA_DataBase\x_DataHandling\B2-2_sample")
+    """
+    All folder paths for one project.
+    Pass base_path as a constructor argument — no hardcoding required.
 
-    base_path = long_path(base_path)
+    Usage:
+        paths = PATHS_OBJ(r"C:\\...\\B2-2_sample")
+    """
 
-    # ----------------- DO NOT CHANGE FOLDER TEMPLATE -----------
-    dump_path = base_path / "01_Incoming_Compressed_Files"
-    extract_path = base_path / "02_Extracted_Raw_Files"
+    def __init__(self, base_path: str | Path):
+        self.base_path = long_path(Path(base_path))
 
-    harmonized_path = base_path / "03_Harmonized_Data"
-    config_path = base_path / "05_Configuration"
-    config_file_path = base_path / "05_Configuration" / "format_config.yaml"
-    ETL_config_path = base_path / "05_Configuration" / "supplier_data_ETL_config.xlsx"
-    logs_path = base_path / "06_Logs"
-    archived_path = base_path / "07_Archived"
-    backlog_path = base_path / "08_Backlog"
+        # ── Folder layout (do not change) ─────────────────────────────────────
+        self.dump_path          = self.base_path / "01_Incoming_Compressed_Files"
+        self.extract_path       = self.base_path / "02_Extracted_Raw_Files"
+        self.harmonized_path    = self.base_path / "03_Harmonized_Data"
+        self.config_path        = self.base_path / "05_Configuration"
+        self.config_file_path   = self.base_path / "05_Configuration" / "format_config.yaml"
+        self.ETL_config_path    = self.base_path / "05_Configuration" / "supplier_data_ETL_config.xlsx"
+        self.logs_path          = self.base_path / "06_Logs"
+        self.archived_path      = self.base_path / "07_Archived"
+        self.backlog_path       = self.base_path / "08_Backlog"
 
-    # additional variables or initialization
-    debug_path = logs_path / "debug_logs"
-    backend_path = logs_path / "backend_base"
-    debug_path.mkdir(parents=False, exist_ok=True)
-    backend_path.mkdir(parents=False, exist_ok=True)
+        # Additional sub-folders
+        self.debug_path   = self.logs_path / "debug_logs"
+        self.backend_path = self.logs_path / "backend_base"
 
-    copy_action =  'skip_copy' # ['replace', 'create_copy', 'skip_copy'] - only applicable if files are exact match
-    #-------------------------------------------------------------
+        self.debug_path.mkdir(parents=True, exist_ok=True)
+        self.backend_path.mkdir(parents=True, exist_ok=True)
 
-    def check_if_exists(self)->bool:
-
+    def check_if_exists(self) -> bool:
         all_paths = {
-            "dump_path": self.dump_path,
-            "extract_path": self.extract_path,
-            "config_path": self.config_path,
+            "dump_path":       self.dump_path,
+            "extract_path":    self.extract_path,
+            "config_path":     self.config_path,
             "config_file_path": self.config_file_path,
-            "logs_path": self.logs_path,
-            "archived_path": self.archived_path,
-            "backlog_path": self.backlog_path,
-            "debug_path": self.debug_path,
-            "backend_path": self.backend_path,
+            "logs_path":       self.logs_path,
+            "archived_path":   self.archived_path,
+            "backlog_path":    self.backlog_path,
+            "debug_path":      self.debug_path,
+            "backend_path":    self.backend_path,
         }
-
         all_exist = True
         for name, path in all_paths.items():
             if not path.exists():
                 logging.critical(f"Missing path: {name} -> {path}")
                 all_exist = False
-
         return all_exist

@@ -149,20 +149,20 @@ def split_excel_by_data_sheets(input_file:str, output_dir:str, sheet_prefix:str 
     if len(data_sheets) > 1:
         logging.info(f"Running split excel on <{Path(input_file).name}> into <{len(data_sheets)}>"
                      f" Excel files, parts are exported to <{output_dir}>")
+
+        # Read all sheets once before the loop (avoids re-parsing the file N times)
+        all_dfs = pd.read_excel(excel, sheet_name=None, engine='openpyxl')
+
         for i, data_sheet in enumerate(data_sheets):
             out_name = Path(input_file).stem+f'_part{i+1}.xlsx'
             output_file = output_dir / out_name
 
-            # Read all sheets at once
-            sheets_to_read = other_sheets + [data_sheet]
-            temp_df = pd.read_excel(excel, sheet_name=sheets_to_read, engine='openpyxl')
-
             with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
                 # Write other sheets
                 for sheet in other_sheets:
-                    temp_df[sheet].to_excel(writer, sheet_name=sheet, index=False)
+                    all_dfs[sheet].to_excel(writer, sheet_name=sheet, index=False)
                 # Write the data sheet with a new name
-                temp_df[data_sheet].to_excel(writer, sheet_name=sheet_prefix, index=False)
+                all_dfs[data_sheet].to_excel(writer, sheet_name=sheet_prefix, index=False)
             splitted_file_names.append(str(output_file)) #apend to splitted file names
 
         # rename input file that it is splitted

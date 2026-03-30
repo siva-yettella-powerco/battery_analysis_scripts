@@ -370,6 +370,39 @@ class cfg_sz_std_01:
 
         return out_df
 
+class cfg_bati_std_01:
+    def __init__(self, filepath: Path):
+        self.filepath = Path(filepath)
+
+    def get_sheet_names(self):
+        return ["unknown_sheet_csv"]
+
+    def get_raw_data(self, config_selected) -> pd.DataFrame:
+        raw_data = pd.read_csv(self.filepath)
+
+        out_df = pd.DataFrame([])
+        # loop over matching datasheets
+
+        if raw_data.shape[0] > 1:
+            # clean the sheet data for headers & get config_to_file_column mapping
+            # TODO Values are still not converted from str to numeric in gen_clean_datasheet
+            sheet_check_flg, cleaned_sheet, header_map = gen_clean_datasheet(sheet_df=raw_data,
+                                                                             config_selected=config_selected,
+                                                                             focus_cols=FOCUS_COLS_ETL,
+                                                                             mandatory_cols=MANDATORY_COLS_ETL)
+            # concat sheets which are okay after cleaned
+            if sheet_check_flg:
+                out_df = pd.concat([out_df, cleaned_sheet], axis=0)
+            else:
+                logging.warning(
+                    f"Sheet check failed in gen_clean_datasheet(): in file {self.filepath.name}")
+
+        else:
+            sheet_check_flg = False
+            logging.warning(f"Sheet empty in file {self.filepath.name}")
+
+        return out_df
+
 def find_matching_config(file_path:Path, etl_df:pd.DataFrame, hm_status_dict:defaultdict) -> tuple[str|None,defaultdict]:
     file_id = str(file_path)
     hm_status_dict[file_id]['file_name'] = file_path.name

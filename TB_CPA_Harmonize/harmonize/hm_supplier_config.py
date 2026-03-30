@@ -11,6 +11,16 @@ def detect_supplier(filepath: Path) -> str:
     '''
     detect supplier based on certain conditions for C48T project
     '''
+
+    if 'CNMCM' in filepath.stem:
+        return 'MCM'
+    elif "CNSRF" in filepath.stem:
+        return 'SRF'
+    elif 'CNTRURON' in filepath.stem:
+        return 'TRURON'
+    elif 'DEBatI' in filepath.stem:
+        return 'BATI'
+
     if ("LFP44X" in filepath.parent.stem):
         return 'MCM'
 
@@ -19,6 +29,7 @@ def detect_supplier(filepath: Path) -> str:
 
     if ('096_' in filepath.parent.stem) and ('_P_' in filepath.parent.stem):
         return 'SZ'
+
 
     if 'C48' in str(filepath):
         if 'MCM' in filepath.stem:
@@ -39,6 +50,8 @@ def detect_supplier(filepath: Path) -> str:
             return 'GOTION'
         elif 'GOT' in filepath.stem:
             return 'MCM'
+        elif 'BatI' in filepath.stem:
+            return 'BATI'
         else:
             if ('B1_sample' in str(filepath)) and ('FCA' in filepath.stem):
                 return 'MCM'
