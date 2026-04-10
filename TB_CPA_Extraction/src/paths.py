@@ -3,16 +3,14 @@ from pathlib import Path
 import logging
 import os
 
-
 def long_path(anypath: Path, path_length_thresh=0) -> Path:
     """Converts paths to \\?\ to support Windows long paths (>260 chars)."""
-    normalized = os.fspath(anypath.resolve())
+    normalized = os.fspath(anypath.absolute())
     if len(normalized) > path_length_thresh:
         if not normalized.startswith('\\\\?\\'):
             normalized = '\\\\?\\' + normalized
         return Path(normalized)
     return anypath
-
 
 class PATHS_OBJ:
     """

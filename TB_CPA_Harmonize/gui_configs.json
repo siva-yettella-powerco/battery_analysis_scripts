@@ -1,16 +1,20 @@
 [
   {
     "name": "New Config",
-    "base_path": "",
+    "base_path": "C:\\Users\\WYBT00P\\OneDrive - Volkswagen AG\\C48 Test data - C48T1\\02_CPA_DataBase\\x_DataHandling\\B1_sample",
     "skip_rerun": true,
     "skip_rerun_except_ids": [],
     "copy_action": "skip_copy",
-    "run_cell_ids": [],
+    "run_cell_ids": [
+      "FCA09C0008",
+      "FCA09C0019",
+      "FCA09C0021"
+    ],
     "generate_dashboard": true
   },
   {
     "name": "New Config",
-    "base_path": "",
+    "base_path": "C:\\Users\\WYBT00P\\OneDrive - Volkswagen AG\\C48 Test data #2 - 02_CPA_DataBase\\x_DataHandling\\B2-2_sample",
     "skip_rerun": true,
     "skip_rerun_except_ids": [],
     "copy_action": "skip_copy",

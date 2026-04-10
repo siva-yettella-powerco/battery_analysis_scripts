@@ -16,11 +16,11 @@ from pathlib import Path
 
 import pandas as pd
 
-from evaluate.step_loader import (
+from step_loader import (
     TEMP_SUFFIX_MAP,
     load_and_prepare,
 )
-from evaluate.signal_features import (
+from signal_features import (
     STANDARD_OFFSETS,
     STANDARD_SUFFIXES,
     VOLTAGE_OFFSETS,
@@ -29,7 +29,7 @@ from evaluate.signal_features import (
     stat_features,
     time_features,
 )
-from evaluate.step_classifier import classify_step
+from step_classifier import classify_step
 
 logger = logging.getLogger(__name__)
 
