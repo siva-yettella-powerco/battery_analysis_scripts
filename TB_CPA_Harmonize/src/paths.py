@@ -5,7 +5,7 @@ import os
 
 def long_path(anypath: Path, path_length_thresh=0) -> Path:
     # converts paths to \\?\ to support long paths
-    normalized = os.fspath(anypath.resolve())
+    normalized = os.fspath(anypath.absolute())
     if len(normalized) > path_length_thresh:
         if not normalized.startswith('\\\\?\\'):
             normalized = '\\\\?\\' + normalized
