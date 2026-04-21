@@ -1,10 +1,16 @@
 RawDataHandling:
   format_to_import: #Unix filename pattern matching, refer: fnmatch
-    "*DQ*.xlsx":
+    "DQ*.xlsx":
       supplier: Gotion
       datasheet_name: RecordInfo #name of the sheet where data lies
       split_datasheets: yes # yes if multiple RecordInfo sheets with suffix is possible
       cellid_prefix: DQ # the sub string prefix to match after splitting at all special characters
+
+    "*SHP*SRF*.xlsx":
+      supplier: SRF
+      datasheet_name: Data
+      split_datasheets: no # no if no need to split Data sheets
+      cellid_prefix: SHP
 
     "*_FC*.xlsx":
       supplier: MCM
@@ -12,23 +18,18 @@ RawDataHandling:
       split_datasheets: no # no if no need to split Data sheets
       cellid_prefix: FC
 
-    "*GOT*.xlsx":
-      supplier: Gotion
-      datasheet_name: Data
-      split_datasheets: no # no if no need to split Data sheets
-      cellid_prefix: GOT
+    "*_SHP*.xlsx":
+      supplier: SRF
+      datasheet_name: RecordInfo
+      split_datasheets: yes # no if no need to split Data sheets
+      cellid_prefix: SHP
 
-    "*GOT*.XLS":
-      supplier: Gotion
-      datasheet_name: Data
-      split_datasheets: no # no if no need to split Data sheets
-      cellid_prefix: GOT
+    "*_PCO*.xlsx":
+      supplier: SRF
+      datasheet_name: RecordInfo
+      split_datasheets: yes # no if no need to split Data sheets
+      cellid_prefix: PCO
 
-    "*GOT*.xls":
-      supplier: Gotion
-      datasheet_name: Data
-      split_datasheets: no # no if no need to split Data sheets
-      cellid_prefix: GOT
 
   format_to_ignore: # File formats to ignore while importing, leave it empty or .ignore
     "*.ignore":

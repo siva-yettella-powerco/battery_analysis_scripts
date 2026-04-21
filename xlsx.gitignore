@@ -2,3 +2,16 @@
 *.csv
 *.xlsm
 *.xls
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
