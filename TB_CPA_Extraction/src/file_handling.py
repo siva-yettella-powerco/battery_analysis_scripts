@@ -486,7 +486,7 @@ def append_status_to_excel(status_dict: dict, logs_path: Path, backend_path:Path
     # hdf export is done to make sure every run has a trace exported which cannot be tampered easily,
     # since excel read/write might fail if it is opened by someone
     try:
-        extract_trace.to_parquet(Path(backend_path/f"{time.strftime("%Y%m%d_%H%M%S")}_trace.parquet"), index=False)
+        extract_trace.to_parquet(Path(backend_path/f"{time.strftime('%Y%m%d_%H%M%S')}_trace.parquet"), index=False)
     except Exception as e:
         logging.warning(f"Failed to export parquet trace to {logs_path}: \n Debug message {e}")
 
